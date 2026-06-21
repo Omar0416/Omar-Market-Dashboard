@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Market Dashboard — NASDAQ & NYSE</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 body{background:#0f1117;color:#d1d4dc;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:13px;min-height:100vh;}
@@ -114,6 +115,11 @@ tbody td:nth-child(2){text-align:left;max-width:200px;overflow:hidden;text-overf
 
 .tv-btn{display:inline-flex;align-items:center;gap:6px;background:#2196f3;color:#fff;padding:7px 14px;border-radius:6px;font-size:12px;cursor:pointer;border:none;margin-top:12px;text-decoration:none;font-weight:500;}
 .tv-btn:hover{background:#1976d2;}
+.chart-wrap{position:relative;height:200px;margin:10px 0;}
+.chart-wrap-sm{position:relative;height:160px;margin:8px 0;}
+.toggle-row{display:flex;gap:6px;margin-bottom:8px;}
+.tog{background:#2a2e39;border:none;color:#787b86;padding:3px 10px;border-radius:4px;font-size:11px;cursor:pointer;}
+.tog.on{background:#2196f3;color:#fff;}
 
 @media(max-width:600px){
   .g4{grid-template-columns:1fr 1fr;}
@@ -208,14 +214,18 @@ tbody td:nth-child(2){text-align:left;max-width:200px;overflow:hidden;text-overf
   <div id="pane-fin" class="pane">
     <div class="sec-title">Valuación</div>
     <div class="g4" id="fin-val"></div>
+    <div class="sec-title">Revenue to Profit Conversion</div>
+    <div class="mc"><div class="toggle-row"><button class="tog on" onclick="finToggle('annual',this)">Annual</button><button class="tog" onclick="finToggle('quarterly',this)">Quarterly</button></div><div class="chart-wrap"><canvas id="chart-rev-profit"></canvas></div></div>
+    <div class="sec-title">Growth &amp; Profitability — Márgenes</div>
+    <div class="mc"><div class="chart-wrap"><canvas id="chart-margins"></canvas></div></div>
     <div class="g2">
       <div><div class="sec-title">Crecimiento y rentabilidad</div><div class="mc" id="fin-growth"></div></div>
       <div><div class="sec-title">Salud financiera</div><div class="mc" id="fin-health"></div></div>
     </div>
+    <div class="sec-title">Debt Level &amp; Coverage</div>
+    <div class="mc"><div class="chart-wrap-sm"><canvas id="chart-debt"></canvas></div></div>
     <div class="sec-title">Balance general</div>
     <div class="g2" id="fin-bal"></div>
-    <div class="sec-title">Estimados de revenue</div>
-    <div class="mc" id="fin-est"></div>
   </div>
 
   <!-- TECHNICALS -->
@@ -236,9 +246,9 @@ tbody td:nth-child(2){text-align:left;max-width:200px;overflow:hidden;text-overf
     <div class="sec-title">Analyst rating</div>
     <div class="mc" id="fct-ar" style="margin-bottom:12px;"></div>
     <div class="sec-title">EPS — Reportado vs Estimado</div>
-    <div class="mc" id="fct-eps" style="margin-bottom:12px;"></div>
-    <div class="sec-title">Revenue — Estimados</div>
-    <div class="mc" id="fct-rev"></div>
+    <div class="mc"><div class="toggle-row"><button class="tog on" onclick="epsToggle('annual',this)">Annual</button><button class="tog" onclick="epsToggle('quarterly',this)">Quarterly</button></div><div class="chart-wrap"><canvas id="chart-eps"></canvas></div><div id="fct-eps" style="margin-top:10px;overflow-x:auto;"></div></div>
+    <div class="sec-title">Revenue — Reportado vs Estimado</div>
+    <div class="mc"><div class="chart-wrap"><canvas id="chart-rev"></canvas></div><div id="fct-rev" style="margin-top:10px;overflow-x:auto;"></div></div>
   </div>
 </div>
 </div>
@@ -397,41 +407,149 @@ async function openModal(sym){
   const FMP='https://financialmodelingprep.com/stable';
   const KEY='vmXPeCR9BwnM5xrBKBHUJWnMpHNgsCCS';
   try{
-    const [chart,profile,ratios,metrics,recs,targets,income,cashflow,balance]=await Promise.all([
+    const [chart,profile,ratios,metrics,recs,targets,income,cashflow,balance,earnings,estimates,incomeQ,balanceH]=await Promise.all([
       fetch(`https://corsproxy.io/?url=${encodeURIComponent(`https://query1.finance.yahoo.com/v8/finance/chart/${sym}?interval=1d&range=1y`)}`).then(r=>r.json()).catch(()=>null),
       fetch(`${FMP}/profile?symbol=${sym}&apikey=${KEY}`).then(r=>r.json()).catch(()=>null),
       fetch(`${FMP}/ratios-ttm?symbol=${sym}&apikey=${KEY}`).then(r=>r.json()).catch(()=>null),
       fetch(`${FMP}/key-metrics-ttm?symbol=${sym}&apikey=${KEY}`).then(r=>r.json()).catch(()=>null),
       fetch(`${FMP}/analyst-stock-recommendations?symbol=${sym}&limit=1&apikey=${KEY}`).then(r=>r.json()).catch(()=>null),
       fetch(`${FMP}/price-target-consensus?symbol=${sym}&apikey=${KEY}`).then(r=>r.json()).catch(()=>null),
-      fetch(`${FMP}/income-statement?symbol=${sym}&limit=4&apikey=${KEY}`).then(r=>r.json()).catch(()=>null),
-      fetch(`${FMP}/cash-flow-statement?symbol=${sym}&limit=1&apikey=${KEY}`).then(r=>r.json()).catch(()=>null),
-      fetch(`${FMP}/balance-sheet-statement?symbol=${sym}&limit=1&apikey=${KEY}`).then(r=>r.json()).catch(()=>null)
+      fetch(`${FMP}/income-statement?symbol=${sym}&limit=6&apikey=${KEY}`).then(r=>r.json()).catch(()=>null),
+      fetch(`${FMP}/cash-flow-statement?symbol=${sym}&limit=6&apikey=${KEY}`).then(r=>r.json()).catch(()=>null),
+      fetch(`${FMP}/balance-sheet-statement?symbol=${sym}&limit=6&apikey=${KEY}`).then(r=>r.json()).catch(()=>null),
+      fetch(`${FMP}/earnings?symbol=${sym}&limit=12&apikey=${KEY}`).then(r=>r.json()).catch(()=>null),
+      fetch(`${FMP}/analyst-estimates?symbol=${sym}&limit=4&apikey=${KEY}`).then(r=>r.json()).catch(()=>null),
+      fetch(`${FMP}/income-statement?symbol=${sym}&period=quarter&limit=8&apikey=${KEY}`).then(r=>r.json()).catch(()=>null),
+      fetch(`${FMP}/balance-sheet-statement?symbol=${sym}&limit=6&apikey=${KEY}`).then(r=>r.json()).catch(()=>null)
     ]);
-    const pArr=Array.isArray(profile)?profile:(profile?.data||[]);
-    const p=pArr[0]||{};
-    const rtArr=Array.isArray(ratios)?ratios:(ratios?.data||[]);
-    const rt=rtArr[0]||{};
-    const mkArr=Array.isArray(metrics)?metrics:(metrics?.data||[]);
-    const mk=mkArr[0]||{};
-    const rcArr=Array.isArray(recs)?recs:(recs?.data||[]);
-    const rc=rcArr[0]||{};
-    const tgArr=Array.isArray(targets)?targets:(targets?.data||[]);
-    const tg=tgArr[0]||{};
-    const incArr=Array.isArray(income)?income:(income?.data||[]);
-    const inc=incArr[0]||{};
-    const cfArr=Array.isArray(cashflow)?cashflow:(cashflow?.data||[]);
-    const cf=cfArr[0]||{};
-    const bsArr=Array.isArray(balance)?balance:(balance?.data||[]);
-    const bs=bsArr[0]||{};
-    renderModal({price:p,ratios:rt,metrics:mk,recs:rc,targets:tg,income:inc,cf:cf,bs:bs,incomeHistory:incArr}, chart?.chart?.result?.[0]||null, st, sym);
+    const toArr=x=>Array.isArray(x)?x:(x?.data||[]);
+    const p=toArr(profile)[0]||{};
+    const rt=toArr(ratios)[0]||{};
+    const mk=toArr(metrics)[0]||{};
+    const rc=toArr(recs)[0]||{};
+    const tg=toArr(targets)[0]||{};
+    const incArr=toArr(income).reverse();
+    const inc=incArr[incArr.length-1]||{};
+    const cfArr=toArr(cashflow).reverse();
+    const cf=cfArr[cfArr.length-1]||{};
+    const bsArr=toArr(balance).reverse();
+    const bs=bsArr[bsArr.length-1]||{};
+    const earnArr=toArr(earnings).reverse();
+    const estArr=toArr(estimates).reverse();
+    const incQArr=toArr(incomeQ).reverse();
+    renderModal({price:p,ratios:rt,metrics:mk,recs:rc,targets:tg,income:inc,cf:cf,bs:bs,incomeHistory:incArr,cfHistory:cfArr,bsHistory:bsArr,earnings:earnArr,estimates:estArr,incomeQ:incQArr}, chart?.chart?.result?.[0]||null, st, sym);
   }catch(e){renderFallback(st,sym);}
 }
 
+let _charts={};
+function destroyCharts(){Object.values(_charts).forEach(c=>{try{c.destroy();}catch(e){}});_charts={};}
+let _finMode='annual',_epsMode='annual',_finData=null,_epsData=null;
+
+function mkChart(id,cfg){
+  const el=document.getElementById(id);if(!el)return;
+  if(_charts[id])try{_charts[id].destroy();}catch(e){}
+  Chart.defaults.color='#787b86';
+  Chart.defaults.borderColor='#2a2e39';
+  _charts[id]=new Chart(el,cfg);
+}
+
+const chartDefaults={responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,labels:{color:'#787b86',font:{size:10},boxWidth:12}},tooltip:{backgroundColor:'#1e222d',borderColor:'#2a2e39',borderWidth:1,titleColor:'#d1d4dc',bodyColor:'#787b86'}},scales:{x:{ticks:{color:'#787b86',font:{size:10}},grid:{color:'#1e222d'}},y:{ticks:{color:'#787b86',font:{size:10}},grid:{color:'#2a2e39'}}}};
+
+function drawRevProfitChart(incData,cfData){
+  if(!incData||!incData.length)return;
+  const labels=incData.map(d=>d.calendarYear||d.date?.substring(0,4)||'');
+  const rev=incData.map(d=>d.revenue||0);
+  const gp=incData.map(d=>d.grossProfit||0);
+  const op=incData.map(d=>d.operatingIncome||0);
+  const ni=incData.map(d=>d.netIncome||0);
+  const fcfArr2=(cfData||[]).map(d=>d.freeCashFlow||0);
+  mkChart('chart-rev-profit',{type:'bar',data:{labels,datasets:[
+    {label:'Revenue',data:rev,backgroundColor:'#2196f355',borderColor:'#2196f3',borderWidth:1},
+    {label:'Gross Profit',data:gp,backgroundColor:'#26a69a55',borderColor:'#26a69a',borderWidth:1},
+    {label:'Operating Income',data:op,backgroundColor:'#ff980055',borderColor:'#ff9800',borderWidth:1},
+    {label:'Net Income',data:ni,backgroundColor:'#9c27b055',borderColor:'#9c27b0',borderWidth:1}
+  ]},options:{...chartDefaults,scales:{x:{...chartDefaults.scales.x},y:{...chartDefaults.scales.y,ticks:{...chartDefaults.scales.y.ticks,callback:v=>fN(v)}}}}});
+}
+
+function drawMarginsChart(incData){
+  if(!incData||!incData.length)return;
+  const labels=incData.map(d=>d.calendarYear||d.date?.substring(0,4)||'');
+  const gm=incData.map(d=>d.grossProfitRatio!=null?+(d.grossProfitRatio*100).toFixed(1):null);
+  const om=incData.map(d=>d.operatingIncomeRatio!=null?+(d.operatingIncomeRatio*100).toFixed(1):null);
+  const nm=incData.map(d=>d.netIncomeRatio!=null?+(d.netIncomeRatio*100).toFixed(1):null);
+  mkChart('chart-margins',{type:'line',data:{labels,datasets:[
+    {label:'Gross Margin %',data:gm,borderColor:'#26a69a',backgroundColor:'#26a69a22',tension:.3,fill:false,pointRadius:3},
+    {label:'Operating Margin %',data:om,borderColor:'#ff9800',backgroundColor:'transparent',tension:.3,fill:false,pointRadius:3},
+    {label:'Net Margin %',data:nm,borderColor:'#9c27b0',backgroundColor:'transparent',tension:.3,fill:false,pointRadius:3}
+  ]},options:{...chartDefaults,scales:{x:{...chartDefaults.scales.x},y:{...chartDefaults.scales.y,ticks:{...chartDefaults.scales.y.ticks,callback:v=>v+'%'}}}}});
+}
+
+function drawDebtChart(bsData,cfData){
+  if(!bsData||!bsData.length)return;
+  const labels=bsData.map(d=>d.calendarYear||d.date?.substring(0,4)||'');
+  const debt=bsData.map(d=>d.totalDebt||0);
+  const cash=bsData.map(d=>d.cashAndCashEquivalents||0);
+  const fcf=(cfData||[]).map(d=>d.freeCashFlow||0);
+  mkChart('chart-debt',{type:'bar',data:{labels,datasets:[
+    {label:'Total Debt',data:debt,backgroundColor:'#ef535055',borderColor:'#ef5350',borderWidth:1},
+    {label:'Cash',data:cash,backgroundColor:'#26a69a55',borderColor:'#26a69a',borderWidth:1},
+    {label:'Free Cash Flow',data:fcf,type:'line',borderColor:'#2196f3',backgroundColor:'transparent',tension:.3,pointRadius:3,yAxisID:'y'}
+  ]},options:{...chartDefaults,scales:{x:{...chartDefaults.scales.x},y:{...chartDefaults.scales.y,ticks:{...chartDefaults.scales.y.ticks,callback:v=>fN(v)}}}}});
+}
+
+function drawEpsChart(data,mode){
+  if(!data||!data.length)return;
+  const filt=mode==='annual'?data.filter(d=>!d.period||d.period===''||d.period==='FY'):data.filter(d=>d.period&&d.period!=='FY');
+  const src=filt.length?filt:data;
+  const labels=src.map(d=>d.date?d.date.substring(0,7):d.period||'');
+  const rep=src.map(d=>d.eps!=null?+parseFloat(d.eps).toFixed(2):null);
+  const est=src.map(d=>d.estimatedEps!=null?+parseFloat(d.estimatedEps).toFixed(2):null);
+  mkChart('chart-eps',{type:'bar',data:{labels,datasets:[
+    {label:'Reported EPS',data:rep,backgroundColor:'#2196f3aa',borderColor:'#2196f3',borderWidth:1},
+    {label:'Estimated EPS',data:est,backgroundColor:'#78909c55',borderColor:'#78909c',borderWidth:1,borderDash:[4,2]}
+  ]},options:{...chartDefaults}});
+}
+
+function drawRevChart(incData,estData){
+  if(!incData||!incData.length)return;
+  const histLabels=incData.map(d=>d.calendarYear||d.date?.substring(0,4)||'');
+  const histRev=incData.map(d=>d.revenue||0);
+  const estLabels=(estData||[]).map(d=>d.date?.substring(0,4)||d.calendarYear||'');
+  const estRev=(estData||[]).map(d=>d.estimatedRevenueAvg||0);
+  const allLabels=[...new Set([...histLabels,...estLabels])];
+  const revMap=Object.fromEntries(histLabels.map((l,i)=>[l,histRev[i]]));
+  const estMap=Object.fromEntries(estLabels.map((l,i)=>[l,estRev[i]]));
+  mkChart('chart-rev',{type:'bar',data:{labels:allLabels,datasets:[
+    {label:'Reported Revenue',data:allLabels.map(l=>revMap[l]||null),backgroundColor:'#2196f3aa',borderColor:'#2196f3',borderWidth:1},
+    {label:'Estimated Revenue',data:allLabels.map(l=>estMap[l]||null),backgroundColor:'#9c27b055',borderColor:'#9c27b0',borderWidth:1,borderDash:[4,2]}
+  ]},options:{...chartDefaults,scales:{x:{...chartDefaults.scales.x},y:{...chartDefaults.scales.y,ticks:{...chartDefaults.scales.y.ticks,callback:v=>fN(v)}}}}});
+}
+
+function finToggle(mode,btn){
+  _finMode=mode;
+  document.querySelectorAll('.tog').forEach(b=>{if(b.onclick?.toString().includes('finToggle'))b.classList.remove('on');});
+  btn.classList.add('on');
+  if(_finData){
+    const src=mode==='annual'?_finData.incH:_finData.incQ;
+    const cf=mode==='annual'?_finData.cfH:[];
+    drawRevProfitChart(src,cf);
+  }
+}
+
+function epsToggle(mode,btn){
+  _epsMode=mode;
+  document.querySelectorAll('.tog').forEach(b=>{if(b.onclick?.toString().includes('epsToggle'))b.classList.remove('on');});
+  btn.classList.add('on');
+  if(_epsData)drawEpsChart(_epsData,mode);
+}
+
 function renderModal(r,cd,st,sym){
-  // r = {price:p, ratios:rt, metrics:mk, recs:rc, targets:tg, income:inc, cf:cf, bs:bs, incomeHistory:[]}
+  destroyCharts();
   const p=r.price||{},rt=r.ratios||{},mk=r.metrics||{},rc=r.recs||{},tg=r.targets||{};
   const inc=r.income||{},cf=r.cf||{},bs=r.bs||{},incH=r.incomeHistory||[];
+  const earnArr=r.earnings||[],estArr=r.estimates||[],incQ=r.incomeQ||[];
+  const cfH=r.cfHistory||[],bsH=r.bsHistory||[];
+  _finData={incH,incQ,cfH};_epsData=earnArr;
 
   // Live price from FMP profile
   const livePrc=p.price;
@@ -536,6 +654,15 @@ function renderModal(r,cd,st,sym){
   document.getElementById('fct-rev').innerHTML=`<table class="etbl"><thead><tr><th>Año</th><th>Revenue</th><th>Net Income</th><th>Margen Neto</th></tr></thead><tbody>
   ${incH.length?incH.slice(0,4).map(t=>`<tr><td>${t.calendarYear||'—'}</td><td>${fN(t.revenue)}</td><td>${fN(t.netIncome)}</td><td>${t.netIncomeRatio!=null?(parseFloat(t.netIncomeRatio)*100).toFixed(1)+'%':'—'}</td></tr>`).join(''):
   '<tr><td colspan="4" style="color:#787b86;text-align:center;padding:10px;">Sin datos</td></tr>'}</tbody></table>`;
+
+  // ── CHARTS (rendered after DOM is set) ──
+  setTimeout(()=>{
+    drawRevProfitChart(incH,cfH);
+    drawMarginsChart(incH);
+    drawDebtChart(bsH,cfH);
+    drawEpsChart(earnArr,'annual');
+    drawRevChart(incH,estArr);
+  },50);
 }
 
 function renderFallback(st,sym){
