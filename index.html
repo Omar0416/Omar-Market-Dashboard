@@ -397,7 +397,7 @@ async function openModal(sym){
   const proxy='https://corsproxy.io/?url=';
   try{
     // Yahoo Finance requires a crumb for authenticated endpoints
-    const crumb=await fetch(`${proxy}${encodeURIComponent('https://query1.finance.yahoo.com/v1/test/getcrumb')}`,{credentials:'include'}).then(r=>r.text()).catch(()=>null);
+    const crumb=await fetch(`${proxy}${encodeURIComponent('https://query1.finance.yahoo.com/v1/test/getcrumb')}`).then(r=>r.text()).catch(()=>null);
     const summUrl=`https://query2.finance.yahoo.com/v10/finance/quoteSummary/${sym}?modules=price,summaryDetail,defaultKeyStatistics,financialData,assetProfile,recommendationTrend,earningsTrend,earningsHistory,balanceSheetHistory${crumb?'&crumb='+encodeURIComponent(crumb):''}`;
     const chartUrl=`https://query1.finance.yahoo.com/v8/finance/chart/${sym}?interval=1d&range=1y${crumb?'&crumb='+encodeURIComponent(crumb):''}`;
     const [chart,summ]=await Promise.all([
