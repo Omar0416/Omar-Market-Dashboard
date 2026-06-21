@@ -257,22 +257,32 @@ const SC={Technology:'#2196f3',Finance:'#ff9800','Health Care':'#26a69a','Consum
 const stag=s=>{if(!s)return'<span class="tag" style="background:#1a1e2e;color:#4a4e5a;">—</span>';const c=SC[s]||'#787b86';return`<span class="tag" style="background:${c}22;color:${c};">${s.replace('Consumer ','').replace(' Care','').replace(' Services','').substring(0,12)}</span>`;};
 const proc=(s,ex)=>({...s,exchange:ex,price:parseFloat((s.lastsale||'').replace('$','')),pct:parseFloat((s.pctchange||'').replace('%','')),volume:parseInt(s.volume||0),marketCap:parseFloat(s.marketCap||0)});
 
+function fetchWithTimeout(url, ms=20000){
+  const ctrl=new AbortController();
+  const id=setTimeout(()=>ctrl.abort(),ms);
+  return fetch(url,{signal:ctrl.signal}).finally(()=>clearTimeout(id));
+}
+
 async function loadAll(){
+  const setStatus=msg=>document.getElementById('stxt').textContent=msg;
   try{
-    const [nd,ny]=await Promise.all([
-      fetch('https://cdn.jsdelivr.net/gh/rreichel3/US-Stock-Symbols@main/nasdaq/nasdaq_full_tickers.json').then(r=>r.json()),
-      fetch('https://cdn.jsdelivr.net/gh/rreichel3/US-Stock-Symbols@main/nyse/nyse_full_tickers.json').then(r=>r.json())
-    ]);
+    setStatus('Descargando NASDAQ...');
+    const nd=await fetchWithTimeout('https://cdn.jsdelivr.net/gh/rreichel3/US-Stock-Symbols@main/nasdaq/nasdaq_full_tickers.json').then(r=>r.json());
+    setStatus(`NASDAQ OK (${nd.length} acciones) — Descargando NYSE...`);
+    const ny=await fetchWithTimeout('https://cdn.jsdelivr.net/gh/rreichel3/US-Stock-Symbols@main/nyse/nyse_full_tickers.json').then(r=>r.json());
+    setStatus('Procesando datos...');
     ALL=[...nd.map(s=>proc(s,'NASDAQ')),...ny.map(s=>proc(s,'NYSE'))];
     ALL.forEach(s=>{if(s.sector)SECS.add(s.sector);});
     const sel=document.getElementById('secF');
     [...SECS].sort().forEach(s=>{const o=document.createElement('option');o.value=s;o.textContent=s;sel.appendChild(o);});
     FILT=[...ALL];srtData();
-    document.getElementById('stxt').textContent=ALL.length.toLocaleString()+' acciones cargadas';
+    setStatus(ALL.length.toLocaleString()+' acciones cargadas');
     document.getElementById('lastUpdate').textContent='Actualizado: '+new Date().toLocaleTimeString('es-ES');
     document.getElementById('pgBar').style.display='flex';
   }catch(e){
-    document.getElementById('tableArea').innerHTML='<div class="loader" style="color:#ef5350;"><i class="ti ti-alert-circle" style="font-size:32px;"></i><div>Error al cargar. Recarga la página (F5).</div></div>';
+    const msg=e.name==='AbortError'?'Timeout — La descarga tardó demasiado. Recarga (F5).':'Error al cargar datos. Revisa tu conexión y recarga (F5).';
+    document.getElementById('tableArea').innerHTML=`<div class="loader" style="color:#ef5350;"><div style="font-size:32px;">⚠</div><div>${msg}</div><button onclick="location.reload()" style="margin-top:12px;padding:8px 18px;background:#2196f3;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;">Recargar</button></div>`;
+    document.getElementById('stxt').textContent='Error de carga';
   }
 }
 
