@@ -212,20 +212,35 @@ tbody td:nth-child(2){text-align:left;max-width:200px;overflow:hidden;text-overf
 
   <!-- FINANCIALS -->
   <div id="pane-fin" class="pane">
-    <div class="sec-title">Valuación</div>
+    <div class="sec-title">Key Facts</div>
     <div class="g4" id="fin-val"></div>
-    <div class="sec-title">Revenue to Profit Conversion</div>
-    <div class="mc"><div class="toggle-row"><button class="tog on" onclick="finToggle('annual',this)">Annual</button><button class="tog" onclick="finToggle('quarterly',this)">Quarterly</button></div><div class="chart-wrap"><canvas id="chart-rev-profit"></canvas></div></div>
-    <div class="sec-title">Growth &amp; Profitability — Márgenes</div>
-    <div class="mc"><div class="chart-wrap"><canvas id="chart-margins"></canvas></div></div>
     <div class="g2">
-      <div><div class="sec-title">Crecimiento y rentabilidad</div><div class="mc" id="fin-growth"></div></div>
-      <div><div class="sec-title">Salud financiera</div><div class="mc" id="fin-health"></div></div>
+      <div class="mc" id="fin-growth"></div>
+      <div class="mc" id="fin-health"></div>
     </div>
-    <div class="sec-title">Debt Level &amp; Coverage</div>
-    <div class="mc"><div class="chart-wrap-sm"><canvas id="chart-debt"></canvas></div></div>
-    <div class="sec-title">Balance general</div>
-    <div class="g2" id="fin-bal"></div>
+
+    <div class="sec-title" style="margin-top:16px;">Capital Structure</div>
+    <div class="mc"><div id="fin-cap-struct"></div></div>
+
+    <div class="sec-title" style="margin-top:16px;">Growth &amp; Profitability — Performance <span style="float:right;"><button class="tog on" id="tog-perf-a" onclick="perfToggle('annual',this)">Annual</button> <button class="tog" id="tog-perf-q" onclick="perfToggle('quarterly',this)">Quarterly</button></span></div>
+    <div class="mc"><div class="chart-wrap" style="height:220px;"><canvas id="chart-performance"></canvas></div></div>
+
+    <div class="sec-title" style="margin-top:16px;">Revenue to Profit Conversion <span style="float:right;"><button class="tog on" id="tog-rpc-a" onclick="rpcToggle('annual',this)">Annual</button> <button class="tog" id="tog-rpc-q" onclick="rpcToggle('quarterly',this)">Quarterly</button></span></div>
+    <div class="mc"><div class="chart-wrap" style="height:200px;"><canvas id="chart-rpc"></canvas></div></div>
+
+    <div class="sec-title" style="margin-top:16px;">Estimates <span style="float:right;"><button class="tog on" id="tog-est-a" onclick="estToggle('annual',this)">Annual</button> <button class="tog" id="tog-est-q" onclick="estToggle('quarterly',this)">Quarterly</button></span></div>
+    <div class="mc">
+      <div style="font-size:11px;color:#787b86;margin-bottom:6px;">Revenue</div>
+      <div class="chart-wrap-sm"><canvas id="chart-est-rev"></canvas></div>
+      <div style="font-size:11px;color:#787b86;margin:12px 0 6px;">Earnings (EPS)</div>
+      <div class="chart-wrap-sm"><canvas id="chart-est-eps"></canvas></div>
+    </div>
+
+    <div class="sec-title" style="margin-top:16px;">Financial Health — Debt Level &amp; Coverage <span style="float:right;"><button class="tog on" id="tog-debt-a" onclick="debtToggle('annual',this)">Annual</button> <button class="tog" id="tog-debt-q" onclick="debtToggle('quarterly',this)">Quarterly</button></span></div>
+    <div class="mc"><div class="chart-wrap" style="height:200px;"><canvas id="chart-debt"></canvas></div></div>
+
+    <div class="sec-title" style="margin-top:16px;">Financial Position Analysis <span style="float:right;"><button class="tog on" id="tog-fpa-a" onclick="fpaToggle('annual',this)">Annual</button> <button class="tog" id="tog-fpa-q" onclick="fpaToggle('quarterly',this)">Quarterly</button></span></div>
+    <div class="mc"><div class="chart-wrap" style="height:200px;"><canvas id="chart-fpa"></canvas></div></div>
   </div>
 
   <!-- TECHNICALS -->
@@ -241,14 +256,17 @@ tbody td:nth-child(2){text-align:left;max-width:200px;overflow:hidden;text-overf
 
   <!-- FORECASTS -->
   <div id="pane-fct" class="pane">
-    <div class="sec-title">Price target — 12 meses</div>
-    <div class="mc" id="fct-pt" style="margin-bottom:12px;"></div>
-    <div class="sec-title">Analyst rating</div>
-    <div class="mc" id="fct-ar" style="margin-bottom:12px;"></div>
-    <div class="sec-title">EPS — Reportado vs Estimado</div>
-    <div class="mc"><div class="toggle-row"><button class="tog on" onclick="epsToggle('annual',this)">Annual</button><button class="tog" onclick="epsToggle('quarterly',this)">Quarterly</button></div><div class="chart-wrap"><canvas id="chart-eps"></canvas></div><div id="fct-eps" style="margin-top:10px;overflow-x:auto;"></div></div>
-    <div class="sec-title">Revenue — Reportado vs Estimado</div>
-    <div class="mc"><div class="chart-wrap"><canvas id="chart-rev"></canvas></div><div id="fct-rev" style="margin-top:10px;overflow-x:auto;"></div></div>
+    <div class="sec-title">Price Target — 12 meses</div>
+    <div class="mc" id="fct-pt" style="margin-bottom:14px;"></div>
+
+    <div class="sec-title">Analyst Rating</div>
+    <div class="mc" id="fct-ar" style="margin-bottom:14px;"></div>
+
+    <div class="sec-title">Revenue <span style="float:right;"><button class="tog on" id="tog-frev-a" onclick="frevToggle('annual',this)">Annual</button> <button class="tog" id="tog-frev-q" onclick="frevToggle('quarterly',this)">Quarterly</button></span></div>
+    <div class="mc"><div class="chart-wrap" style="height:180px;"><canvas id="chart-frev"></canvas></div><div id="fct-rev" style="margin-top:8px;"></div></div>
+
+    <div class="sec-title" style="margin-top:16px;">Earnings (EPS) <span style="float:right;"><button class="tog on" id="tog-feps-a" onclick="fepsToggle('annual',this)">Annual</button> <button class="tog" id="tog-feps-q" onclick="fepsToggle('quarterly',this)">Quarterly</button></span></div>
+    <div class="mc"><div class="chart-wrap" style="height:180px;"><canvas id="chart-feps"></canvas></div><div id="fct-eps" style="margin-top:8px;"></div></div>
   </div>
 </div>
 </div>
@@ -443,105 +461,149 @@ async function openModal(sym){
 
 let _charts={};
 function destroyCharts(){Object.values(_charts).forEach(c=>{try{c.destroy();}catch(e){}});_charts={};}
-let _finMode='annual',_epsMode='annual',_finData=null,_epsData=null;
+let _D={}; // cached data for toggle functions
 
 function mkChart(id,cfg){
   const el=document.getElementById(id);if(!el)return;
   if(_charts[id])try{_charts[id].destroy();}catch(e){}
-  Chart.defaults.color='#787b86';
-  Chart.defaults.borderColor='#2a2e39';
+  Chart.defaults.color='#787b86';Chart.defaults.borderColor='#2a2e39';
   _charts[id]=new Chart(el,cfg);
 }
 
-const chartDefaults={responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,labels:{color:'#787b86',font:{size:10},boxWidth:12}},tooltip:{backgroundColor:'#1e222d',borderColor:'#2a2e39',borderWidth:1,titleColor:'#d1d4dc',bodyColor:'#787b86'}},scales:{x:{ticks:{color:'#787b86',font:{size:10}},grid:{color:'#1e222d'}},y:{ticks:{color:'#787b86',font:{size:10}},grid:{color:'#2a2e39'}}}};
+const cOpts=(yFmt)=>({responsive:true,maintainAspectRatio:false,
+  plugins:{legend:{display:true,position:'bottom',labels:{color:'#787b86',font:{size:10},boxWidth:10,padding:14}},
+    tooltip:{backgroundColor:'#1e222d',borderColor:'#2a2e39',borderWidth:1,titleColor:'#d1d4dc',bodyColor:'#787b86',callbacks:{label:ctx=>` ${ctx.dataset.label}: ${yFmt?yFmt(ctx.raw):ctx.raw}`}}},
+  scales:{x:{ticks:{color:'#787b86',font:{size:10},maxRotation:0},grid:{color:'#1e222d'},border:{color:'#2a2e39'}},
+    y:{ticks:{color:'#787b86',font:{size:10},callback:yFmt||((v)=>v)},grid:{color:'#2a2e39'},border:{color:'#2a2e39'}}}});
 
-function drawRevProfitChart(incData,cfData){
-  if(!incData||!incData.length)return;
-  const labels=incData.map(d=>d.calendarYear||d.date?.substring(0,4)||'');
-  const rev=incData.map(d=>d.revenue||0);
-  const gp=incData.map(d=>d.grossProfit||0);
-  const op=incData.map(d=>d.operatingIncome||0);
-  const ni=incData.map(d=>d.netIncome||0);
-  const fcfArr2=(cfData||[]).map(d=>d.freeCashFlow||0);
-  mkChart('chart-rev-profit',{type:'bar',data:{labels,datasets:[
-    {label:'Revenue',data:rev,backgroundColor:'#2196f355',borderColor:'#2196f3',borderWidth:1},
-    {label:'Gross Profit',data:gp,backgroundColor:'#26a69a55',borderColor:'#26a69a',borderWidth:1},
-    {label:'Operating Income',data:op,backgroundColor:'#ff980055',borderColor:'#ff9800',borderWidth:1},
-    {label:'Net Income',data:ni,backgroundColor:'#9c27b055',borderColor:'#9c27b0',borderWidth:1}
-  ]},options:{...chartDefaults,scales:{x:{...chartDefaults.scales.x},y:{...chartDefaults.scales.y,ticks:{...chartDefaults.scales.y.ticks,callback:v=>fN(v)}}}}});
+function lbl(d){return d.calendarYear||d.date?.substring(0,4)||'';}
+
+// Performance chart: Revenue+NetIncome bars (left Y) + Net Margin % line (right Y)
+function drawPerformance(inc,mode){
+  if(!inc||!inc.length)return;
+  const src=mode==='quarterly'?(_D.incQ||[]):inc;
+  const labels=src.map(d=>mode==='quarterly'?(d.period||d.date?.substring(0,7)||''):lbl(d));
+  const rev=src.map(d=>d.revenue||0);
+  const ni=src.map(d=>d.netIncome||0);
+  const nm=src.map(d=>d.netIncomeRatio!=null?+(d.netIncomeRatio*100).toFixed(1):null);
+  mkChart('chart-performance',{type:'bar',data:{labels,datasets:[
+    {label:'Revenue',data:rev,backgroundColor:'#2196f3bb',borderWidth:0,yAxisID:'y',order:2},
+    {label:'Net income',data:ni,backgroundColor:'#26a69abb',borderWidth:0,yAxisID:'y',order:2},
+    {label:'Net margin %',data:nm,type:'line',borderColor:'#f5a623',backgroundColor:'transparent',tension:.3,pointRadius:4,pointBackgroundColor:'#f5a623',yAxisID:'y2',order:1}
+  ]},options:{...cOpts(fN),plugins:{...cOpts().plugins},scales:{
+    x:{ticks:{color:'#787b86',font:{size:10},maxRotation:0},grid:{color:'#1e222d'},border:{color:'#2a2e39'}},
+    y:{ticks:{color:'#787b86',font:{size:10},callback:v=>fN(v)},grid:{color:'#2a2e39'},border:{color:'#2a2e39'},position:'left'},
+    y2:{ticks:{color:'#f5a623',font:{size:10},callback:v=>v+'%'},grid:{display:false},border:{color:'#2a2e39'},position:'right'}
+  }}});
 }
 
-function drawMarginsChart(incData){
-  if(!incData||!incData.length)return;
-  const labels=incData.map(d=>d.calendarYear||d.date?.substring(0,4)||'');
-  const gm=incData.map(d=>d.grossProfitRatio!=null?+(d.grossProfitRatio*100).toFixed(1):null);
-  const om=incData.map(d=>d.operatingIncomeRatio!=null?+(d.operatingIncomeRatio*100).toFixed(1):null);
-  const nm=incData.map(d=>d.netIncomeRatio!=null?+(d.netIncomeRatio*100).toFixed(1):null);
-  mkChart('chart-margins',{type:'line',data:{labels,datasets:[
-    {label:'Gross Margin %',data:gm,borderColor:'#26a69a',backgroundColor:'#26a69a22',tension:.3,fill:false,pointRadius:3},
-    {label:'Operating Margin %',data:om,borderColor:'#ff9800',backgroundColor:'transparent',tension:.3,fill:false,pointRadius:3},
-    {label:'Net Margin %',data:nm,borderColor:'#9c27b0',backgroundColor:'transparent',tension:.3,fill:false,pointRadius:3}
-  ]},options:{...chartDefaults,scales:{x:{...chartDefaults.scales.x},y:{...chartDefaults.scales.y,ticks:{...chartDefaults.scales.y.ticks,callback:v=>v+'%'}}}}});
+// Revenue to Profit Conversion waterfall-style
+function drawRPC(inc,mode){
+  if(!inc||!inc.length)return;
+  const src=mode==='quarterly'?(_D.incQ||[]):inc;
+  const d=src[src.length-1]||{};
+  const rev=d.revenue||0,cogs=d.costOfRevenue||0,gp=d.grossProfit||0;
+  const opex=(d.operatingExpenses||0),oi=d.operatingIncome||0;
+  const nonop=(d.totalOtherIncomeExpensesNet||0),tax=(d.incomeTaxExpense||0),ni=d.netIncome||0;
+  const labels=['Revenue','COGS','Gross Profit','Op Expenses','Op Income','Non-Op','Taxes','Net Income'];
+  const data=[rev,cogs,gp,opex,oi,Math.abs(nonop),tax,ni];
+  const colors=['#26a69a','#ef5350','#26a69a','#ef5350','#2196f3','#ff9800','#ef5350','#2196f3'];
+  mkChart('chart-rpc',{type:'bar',data:{labels,datasets:[{label:'USD',data,backgroundColor:colors,borderWidth:0}]},
+    options:{...cOpts(fN),plugins:{legend:{display:false},tooltip:{...cOpts().plugins.tooltip}}}});
 }
 
-function drawDebtChart(bsData,cfData){
-  if(!bsData||!bsData.length)return;
-  const labels=bsData.map(d=>d.calendarYear||d.date?.substring(0,4)||'');
-  const debt=bsData.map(d=>d.totalDebt||0);
-  const cash=bsData.map(d=>d.cashAndCashEquivalents||0);
-  const fcf=(cfData||[]).map(d=>d.freeCashFlow||0);
+// Capital structure horizontal bar
+function drawCapStruct(mc,debt,cash,ev){
+  const el=document.getElementById('fin-cap-struct');if(!el)return;
+  const vals=[['Market cap',mc,'#2196f3'],['Debt',debt,'#ef5350'],['Cash & equivalents',cash,'#26a69a'],['Enterprise value',ev,'#ff9800']];
+  const max=Math.max(...vals.map(v=>+(v[1]||0)));
+  el.innerHTML=vals.map(([lbl,val,col])=>{
+    const pct=max>0?(+(val||0)/max*100).toFixed(1):0;
+    return`<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;font-size:12px;">
+      <span style="min-width:130px;color:#d1d4dc;">${lbl}</span>
+      <div style="flex:1;background:#2a2e39;border-radius:3px;height:8px;"><div style="width:${pct}%;height:100%;background:${col};border-radius:3px;"></div></div>
+      <span style="min-width:70px;text-align:right;color:#787b86;">${fN(val)}</span></div>`;
+  }).join('');
+}
+
+// Estimates dot chart (TradingView style: filled circle=actual, open circle=estimate)
+function drawEstDots(canvasId,incH,estArr,field,estField,yFmt){
+  if(!canvasId)return;
+  const histMap=Object.fromEntries((incH||[]).map(d=>[lbl(d),+(d[field]||0)]));
+  const estMap=Object.fromEntries((estArr||[]).map(d=>[d.date?.substring(0,4)||'',+(d[estField]||0)]));
+  const allYears=[...new Set([...Object.keys(histMap),...Object.keys(estMap)])].sort();
+  const actual=allYears.map(y=>histMap[y]!=null?histMap[y]:null);
+  const estimate=allYears.map(y=>estMap[y]!=null?estMap[y]:null);
+  mkChart(canvasId,{type:'scatter',data:{datasets:[
+    {label:'Actual',data:allYears.map((y,i)=>actual[i]!=null?{x:y,y:actual[i]}:null).filter(Boolean),backgroundColor:'#26a69a',borderColor:'#26a69a',pointRadius:7,pointStyle:'circle'},
+    {label:'Estimate',data:allYears.map((y,i)=>estimate[i]!=null?{x:y,y:estimate[i]}:null).filter(Boolean),backgroundColor:'transparent',borderColor:'#78909c',borderWidth:2,pointRadius:7,pointStyle:'circle'}
+  ]},options:{responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{display:true,position:'bottom',labels:{color:'#787b86',font:{size:10},boxWidth:10}},
+      tooltip:{backgroundColor:'#1e222d',borderColor:'#2a2e39',borderWidth:1,titleColor:'#d1d4dc',bodyColor:'#787b86',callbacks:{label:ctx=>`${ctx.dataset.label}: ${yFmt?yFmt(ctx.parsed.y):ctx.parsed.y}`}}},
+    scales:{x:{type:'category',ticks:{color:'#787b86',font:{size:10}},grid:{color:'#1e222d'},border:{color:'#2a2e39'}},
+      y:{ticks:{color:'#787b86',font:{size:10},callback:yFmt||(v=>v)},grid:{color:'#2a2e39'},border:{color:'#2a2e39'}}}}});
+}
+
+// Debt level and coverage
+function drawDebt(bsH,cfH,mode){
+  const bsSrc=mode==='quarterly'?(_D.bsQ||bsH):bsH;
+  const cfSrc=mode==='quarterly'?(_D.cfQ||cfH):cfH;
+  if(!bsSrc||!bsSrc.length)return;
+  const labels=bsSrc.map(d=>lbl(d));
+  const cfMap=Object.fromEntries((cfSrc||[]).map(d=>[lbl(d),d.freeCashFlow||0]));
   mkChart('chart-debt',{type:'bar',data:{labels,datasets:[
-    {label:'Total Debt',data:debt,backgroundColor:'#ef535055',borderColor:'#ef5350',borderWidth:1},
-    {label:'Cash',data:cash,backgroundColor:'#26a69a55',borderColor:'#26a69a',borderWidth:1},
-    {label:'Free Cash Flow',data:fcf,type:'line',borderColor:'#2196f3',backgroundColor:'transparent',tension:.3,pointRadius:3,yAxisID:'y'}
-  ]},options:{...chartDefaults,scales:{x:{...chartDefaults.scales.x},y:{...chartDefaults.scales.y,ticks:{...chartDefaults.scales.y.ticks,callback:v=>fN(v)}}}}});
+    {label:'Debt',data:bsSrc.map(d=>d.totalDebt||0),backgroundColor:'#ef535088',borderWidth:0},
+    {label:'Free cash flow',data:labels.map(l=>cfMap[l]||0),backgroundColor:'#26a69a88',borderWidth:0},
+    {label:'Cash & equivalents',data:bsSrc.map(d=>d.cashAndCashEquivalents||0),backgroundColor:'#2196f388',borderWidth:0}
+  ]},options:cOpts(fN)});
 }
 
-function drawEpsChart(data,mode){
-  if(!data||!data.length)return;
-  const filt=mode==='annual'?data.filter(d=>!d.period||d.period===''||d.period==='FY'):data.filter(d=>d.period&&d.period!=='FY');
-  const src=filt.length?filt:data;
-  const labels=src.map(d=>d.date?d.date.substring(0,7):d.period||'');
-  const rep=src.map(d=>d.eps!=null?+parseFloat(d.eps).toFixed(2):null);
-  const est=src.map(d=>d.estimatedEps!=null?+parseFloat(d.estimatedEps).toFixed(2):null);
-  mkChart('chart-eps',{type:'bar',data:{labels,datasets:[
-    {label:'Reported EPS',data:rep,backgroundColor:'#2196f3aa',borderColor:'#2196f3',borderWidth:1},
-    {label:'Estimated EPS',data:est,backgroundColor:'#78909c55',borderColor:'#78909c',borderWidth:1,borderDash:[4,2]}
-  ]},options:{...chartDefaults}});
+// Financial position analysis
+function drawFPA(bsH,mode){
+  const src=mode==='quarterly'?(_D.bsQ||bsH):bsH;
+  if(!src||!src.length)return;
+  const last=src[src.length-1]||{};
+  const labels=['Short term','Long term'];
+  const assets=[last.totalCurrentAssets||0,last.totalNonCurrentAssets||0];
+  const liab=[last.totalCurrentLiabilities||0,last.totalNonCurrentLiabilities||0];
+  mkChart('chart-fpa',{type:'bar',data:{labels,datasets:[
+    {label:'Assets',data:assets,backgroundColor:'#2196f388',borderWidth:0},
+    {label:'Liabilities',data:liab,backgroundColor:'#26a69a88',borderWidth:0}
+  ]},options:cOpts(fN)});
 }
 
-function drawRevChart(incData,estData){
-  if(!incData||!incData.length)return;
-  const histLabels=incData.map(d=>d.calendarYear||d.date?.substring(0,4)||'');
-  const histRev=incData.map(d=>d.revenue||0);
-  const estLabels=(estData||[]).map(d=>d.date?.substring(0,4)||d.calendarYear||'');
-  const estRev=(estData||[]).map(d=>d.estimatedRevenueAvg||0);
-  const allLabels=[...new Set([...histLabels,...estLabels])];
-  const revMap=Object.fromEntries(histLabels.map((l,i)=>[l,histRev[i]]));
-  const estMap=Object.fromEntries(estLabels.map((l,i)=>[l,estRev[i]]));
-  mkChart('chart-rev',{type:'bar',data:{labels:allLabels,datasets:[
-    {label:'Reported Revenue',data:allLabels.map(l=>revMap[l]||null),backgroundColor:'#2196f3aa',borderColor:'#2196f3',borderWidth:1},
-    {label:'Estimated Revenue',data:allLabels.map(l=>estMap[l]||null),backgroundColor:'#9c27b055',borderColor:'#9c27b0',borderWidth:1,borderDash:[4,2]}
-  ]},options:{...chartDefaults,scales:{x:{...chartDefaults.scales.x},y:{...chartDefaults.scales.y,ticks:{...chartDefaults.scales.y.ticks,callback:v=>fN(v)}}}}});
+// Forecasts: Revenue dots (actual vs estimate)
+function drawFRev(incH,estArr,mode){
+  const src=mode==='quarterly'?(_D.incQ||[]):incH;
+  const estSrc=mode==='quarterly'?[]:estArr;
+  drawEstDots('chart-frev',src,estSrc,'revenue','estimatedRevenueAvg',fN);
 }
 
-function finToggle(mode,btn){
-  _finMode=mode;
-  document.querySelectorAll('.tog').forEach(b=>{if(b.onclick?.toString().includes('finToggle'))b.classList.remove('on');});
-  btn.classList.add('on');
-  if(_finData){
-    const src=mode==='annual'?_finData.incH:_finData.incQ;
-    const cf=mode==='annual'?_finData.cfH:[];
-    drawRevProfitChart(src,cf);
-  }
+// Forecasts: EPS dots (actual vs estimate)
+function drawFEps(earnArr,estArr,mode){
+  // earnArr from /earnings has eps (actual) and estimatedEps
+  if(!earnArr||!earnArr.length)return;
+  const filt=mode==='annual'?earnArr.filter(d=>!d.period||d.period==='FY'||!d.period.startsWith('Q')):earnArr;
+  const src=filt.length?filt:earnArr;
+  const labels=src.map(d=>d.date?d.date.substring(0,7):lbl(d));
+  mkChart('chart-feps',{type:'scatter',data:{datasets:[
+    {label:'Actual',data:src.map((d,i)=>d.eps!=null?{x:labels[i],y:+parseFloat(d.eps).toFixed(2)}:null).filter(Boolean),backgroundColor:'#26a69a',borderColor:'#26a69a',pointRadius:7},
+    {label:'Estimate',data:src.map((d,i)=>d.estimatedEps!=null?{x:labels[i],y:+parseFloat(d.estimatedEps).toFixed(2)}:null).filter(Boolean),backgroundColor:'transparent',borderColor:'#ef5350',borderWidth:2,pointRadius:7}
+  ]},options:{responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{display:true,position:'bottom',labels:{color:'#787b86',font:{size:10},boxWidth:10}},
+      tooltip:{backgroundColor:'#1e222d',borderColor:'#2a2e39',borderWidth:1,titleColor:'#d1d4dc',bodyColor:'#787b86'}},
+    scales:{x:{type:'category',ticks:{color:'#787b86',font:{size:10}},grid:{color:'#1e222d'},border:{color:'#2a2e39'}},
+      y:{ticks:{color:'#787b86',font:{size:10}},grid:{color:'#2a2e39'},border:{color:'#2a2e39'}}}}});
 }
 
-function epsToggle(mode,btn){
-  _epsMode=mode;
-  document.querySelectorAll('.tog').forEach(b=>{if(b.onclick?.toString().includes('epsToggle'))b.classList.remove('on');});
-  btn.classList.add('on');
-  if(_epsData)drawEpsChart(_epsData,mode);
-}
+// Toggle handlers
+function perfToggle(mode,btn){['tog-perf-a','tog-perf-q'].forEach(id=>{const b=document.getElementById(id);if(b)b.classList.toggle('on',b.id===btn.id);});drawPerformance(_D.incH,mode);}
+function rpcToggle(mode,btn){['tog-rpc-a','tog-rpc-q'].forEach(id=>{const b=document.getElementById(id);if(b)b.classList.toggle('on',b.id===btn.id);});drawRPC(_D.incH,mode);}
+function estToggle(mode,btn){['tog-est-a','tog-est-q'].forEach(id=>{const b=document.getElementById(id);if(b)b.classList.toggle('on',b.id===btn.id);});drawEstDots('chart-est-rev',_D.incH,_D.estArr,'revenue','estimatedRevenueAvg',fN);drawEstDots('chart-est-eps',_D.earnArr,_D.estArr,'eps','estimatedEpsAvg',v=>v!=null?parseFloat(v).toFixed(2):v);}
+function debtToggle(mode,btn){['tog-debt-a','tog-debt-q'].forEach(id=>{const b=document.getElementById(id);if(b)b.classList.toggle('on',b.id===btn.id);});drawDebt(_D.bsH,_D.cfH,mode);}
+function fpaToggle(mode,btn){['tog-fpa-a','tog-fpa-q'].forEach(id=>{const b=document.getElementById(id);if(b)b.classList.toggle('on',b.id===btn.id);});drawFPA(_D.bsH,mode);}
+function frevToggle(mode,btn){['tog-frev-a','tog-frev-q'].forEach(id=>{const b=document.getElementById(id);if(b)b.classList.toggle('on',b.id===btn.id);});drawFRev(_D.incH,_D.estArr,mode);}
+function fepsToggle(mode,btn){['tog-feps-a','tog-feps-q'].forEach(id=>{const b=document.getElementById(id);if(b)b.classList.toggle('on',b.id===btn.id);});drawFEps(_D.earnArr,_D.estArr,mode);}
 
 function renderModal(r,cd,st,sym){
   destroyCharts();
@@ -549,7 +611,7 @@ function renderModal(r,cd,st,sym){
   const inc=r.income||{},cf=r.cf||{},bs=r.bs||{},incH=r.incomeHistory||[];
   const earnArr=r.earnings||[],estArr=r.estimates||[],incQ=r.incomeQ||[];
   const cfH=r.cfHistory||[],bsH=r.bsHistory||[];
-  _finData={incH,incQ,cfH};_epsData=earnArr;
+  _D={incH,incQ,cfH,bsH,earnArr,estArr};
 
   // Live price from FMP profile
   const livePrc=p.price;
@@ -648,20 +710,27 @@ function renderModal(r,cd,st,sym){
   const sb=rc.analystRatingsStrongBuy||0,b2=rc.analystRatingsBuy||0,h2=rc.analystRatingsHold||0,sl=rc.analystRatingsSell||0,sSell=rc.analystRatingsStrongSell||0,tot2=sb+b2+h2+sl+sSell||1;
   document.getElementById('fct-ar').innerHTML=`<div style="font-size:11px;color:#787b86;margin-bottom:14px;">Basado en ${tot2} analistas · <span style="text-transform:capitalize;font-weight:600;color:${rec.includes('buy')?'#26a69a':rec.includes('sell')?'#ef5350':'#787b86'}">${rec}</span></div>
   ${abarHTML('Strong buy',sb,tot2,'#26a69a')}${abarHTML('Buy',b2,tot2,'#26a69a88')}${abarHTML('Hold',h2,tot2,'#787b86')}${abarHTML('Sell',sl,tot2,'#ef535088')}${abarHTML('Strong sell',sSell,tot2,'#ef5350')}`;
-  document.getElementById('fct-eps').innerHTML=`<table class="etbl"><thead><tr><th>Año</th><th>Revenue</th><th>Net Income</th><th>EPS</th></tr></thead><tbody>
-  ${incH.length?incH.slice(0,6).map(e=>`<tr><td>${e.calendarYear||'—'}</td><td>${fN(e.revenue)}</td><td class="${(e.netIncome||0)>=0?'pos':'neg'}">${fN(e.netIncome)}</td><td class="${(e.eps||0)>=0?'pos':'neg'}">${e.eps!=null?parseFloat(e.eps).toFixed(2):'—'}</td></tr>`).join(''):
-  '<tr><td colspan="4" style="color:#787b86;text-align:center;padding:10px;">Sin datos de EPS</td></tr>'}</tbody></table>`;
-  document.getElementById('fct-rev').innerHTML=`<table class="etbl"><thead><tr><th>Año</th><th>Revenue</th><th>Net Income</th><th>Margen Neto</th></tr></thead><tbody>
-  ${incH.length?incH.slice(0,4).map(t=>`<tr><td>${t.calendarYear||'—'}</td><td>${fN(t.revenue)}</td><td>${fN(t.netIncome)}</td><td>${t.netIncomeRatio!=null?(parseFloat(t.netIncomeRatio)*100).toFixed(1)+'%':'—'}</td></tr>`).join(''):
+  // EPS & Revenue metrics tables
+  document.getElementById('fct-eps').innerHTML=`<table class="etbl"><thead><tr><th>Año</th><th>EPS Actual</th><th>EPS Estimado</th><th>Surprise</th></tr></thead><tbody>
+  ${earnArr.length?earnArr.slice(-6).map(e=>{const sur=e.eps&&e.estimatedEps?(((+e.eps-+e.estimatedEps)/Math.abs(+e.estimatedEps))*100).toFixed(1):null;
+  return`<tr><td>${e.date?.substring(0,7)||'—'}</td><td class="pos">${e.eps!=null?parseFloat(e.eps).toFixed(2):'—'}</td><td>${e.estimatedEps!=null?parseFloat(e.estimatedEps).toFixed(2):'—'}</td><td class="${sur&&+sur>=0?'pos':'neg'}">${sur!=null?(+sur>=0?'+':'')+sur+'%':'—'}</td></tr>`;}).join(''):
+  '<tr><td colspan="4" style="color:#787b86;text-align:center;padding:10px;">Sin datos</td></tr>'}</tbody></table>`;
+  document.getElementById('fct-rev').innerHTML=`<table class="etbl"><thead><tr><th>Año</th><th>Revenue</th><th>Net Income</th><th>Net Margin</th></tr></thead><tbody>
+  ${incH.length?incH.slice(-4).map(t=>`<tr><td>${lbl(t)}</td><td>${fN(t.revenue)}</td><td class="${(t.netIncome||0)>=0?'pos':'neg'}">${fN(t.netIncome)}</td><td>${t.netIncomeRatio!=null?(parseFloat(t.netIncomeRatio)*100).toFixed(1)+'%':'—'}</td></tr>`).join(''):
   '<tr><td colspan="4" style="color:#787b86;text-align:center;padding:10px;">Sin datos</td></tr>'}</tbody></table>`;
 
-  // ── CHARTS (rendered after DOM is set) ──
+  // ── CHARTS ──
   setTimeout(()=>{
-    drawRevProfitChart(incH,cfH);
-    drawMarginsChart(incH);
-    drawDebtChart(bsH,cfH);
-    drawEpsChart(earnArr,'annual');
-    drawRevChart(incH,estArr);
+    const mc2=p.mktCap,debt2=bs.totalDebt,cash2=bs.cashAndCashEquivalents,ev2=p.enterpriseValue||mk.enterpriseValueTTM;
+    drawCapStruct(mc2,debt2,cash2,ev2);
+    drawPerformance(incH,'annual');
+    drawRPC(incH,'annual');
+    drawEstDots('chart-est-rev',incH,estArr,'revenue','estimatedRevenueAvg',fN);
+    drawEstDots('chart-est-eps',earnArr,estArr,'eps','estimatedEpsAvg',v=>v!=null?parseFloat(v).toFixed(2):v);
+    drawDebt(bsH,cfH,'annual');
+    drawFPA(bsH,'annual');
+    drawFRev(incH,estArr,'annual');
+    drawFEps(earnArr,estArr,'annual');
   },50);
 }
 
