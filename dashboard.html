@@ -394,29 +394,37 @@ async function openModal(sym){
   });
   document.getElementById('modalBg').classList.add('open');
   switchTab('ov',document.querySelector('.tab'));
-  const FMP='https://financialmodelingprep.com/api/v3';
+  const FMP='https://financialmodelingprep.com/stable';
   const KEY='vmXPeCR9BwnM5xrBKBHUJWnMpHNgsCCS';
   try{
     const [chart,profile,ratios,metrics,recs,targets,income,cashflow,balance]=await Promise.all([
       fetch(`https://corsproxy.io/?url=${encodeURIComponent(`https://query1.finance.yahoo.com/v8/finance/chart/${sym}?interval=1d&range=1y`)}`).then(r=>r.json()).catch(()=>null),
-      fetch(`${FMP}/profile/${sym}?apikey=${KEY}`).then(r=>r.json()).catch(()=>null),
-      fetch(`${FMP}/ratios-ttm/${sym}?apikey=${KEY}`).then(r=>r.json()).catch(()=>null),
-      fetch(`${FMP}/key-metrics-ttm/${sym}?apikey=${KEY}`).then(r=>r.json()).catch(()=>null),
-      fetch(`${FMP}/analyst-stock-recommendations/${sym}?limit=1&apikey=${KEY}`).then(r=>r.json()).catch(()=>null),
-      fetch(`${FMP}/price-target-consensus/${sym}?apikey=${KEY}`).then(r=>r.json()).catch(()=>null),
-      fetch(`${FMP}/income-statement/${sym}?limit=4&apikey=${KEY}`).then(r=>r.json()).catch(()=>null),
-      fetch(`${FMP}/cash-flow-statement/${sym}?limit=1&apikey=${KEY}`).then(r=>r.json()).catch(()=>null),
-      fetch(`${FMP}/balance-sheet-statement/${sym}?limit=1&apikey=${KEY}`).then(r=>r.json()).catch(()=>null)
+      fetch(`${FMP}/profile?symbol=${sym}&apikey=${KEY}`).then(r=>r.json()).catch(()=>null),
+      fetch(`${FMP}/ratios-ttm?symbol=${sym}&apikey=${KEY}`).then(r=>r.json()).catch(()=>null),
+      fetch(`${FMP}/key-metrics-ttm?symbol=${sym}&apikey=${KEY}`).then(r=>r.json()).catch(()=>null),
+      fetch(`${FMP}/analyst-stock-recommendations?symbol=${sym}&limit=1&apikey=${KEY}`).then(r=>r.json()).catch(()=>null),
+      fetch(`${FMP}/price-target-consensus?symbol=${sym}&apikey=${KEY}`).then(r=>r.json()).catch(()=>null),
+      fetch(`${FMP}/income-statement?symbol=${sym}&limit=4&apikey=${KEY}`).then(r=>r.json()).catch(()=>null),
+      fetch(`${FMP}/cash-flow-statement?symbol=${sym}&limit=1&apikey=${KEY}`).then(r=>r.json()).catch(()=>null),
+      fetch(`${FMP}/balance-sheet-statement?symbol=${sym}&limit=1&apikey=${KEY}`).then(r=>r.json()).catch(()=>null)
     ]);
-    const p=Array.isArray(profile)?profile[0]:{};
-    const rt=Array.isArray(ratios)?ratios[0]:{};
-    const mk=Array.isArray(metrics)?metrics[0]:{};
-    const rc=Array.isArray(recs)?recs[0]:{};
-    const tg=Array.isArray(targets)?targets[0]:{};
-    const inc=Array.isArray(income)?income[0]:{};
-    const cf=Array.isArray(cashflow)?cashflow[0]:{};
-    const bs=Array.isArray(balance)?balance[0]:{};
-    renderModal({price:p,ratios:rt,metrics:mk,recs:rc,targets:tg,income:inc,cf:cf,bs:bs,incomeHistory:income||[]}, chart?.chart?.result?.[0]||null, st, sym);
+    const pArr=Array.isArray(profile)?profile:(profile?.data||[]);
+    const p=pArr[0]||{};
+    const rtArr=Array.isArray(ratios)?ratios:(ratios?.data||[]);
+    const rt=rtArr[0]||{};
+    const mkArr=Array.isArray(metrics)?metrics:(metrics?.data||[]);
+    const mk=mkArr[0]||{};
+    const rcArr=Array.isArray(recs)?recs:(recs?.data||[]);
+    const rc=rcArr[0]||{};
+    const tgArr=Array.isArray(targets)?targets:(targets?.data||[]);
+    const tg=tgArr[0]||{};
+    const incArr=Array.isArray(income)?income:(income?.data||[]);
+    const inc=incArr[0]||{};
+    const cfArr=Array.isArray(cashflow)?cashflow:(cashflow?.data||[]);
+    const cf=cfArr[0]||{};
+    const bsArr=Array.isArray(balance)?balance:(balance?.data||[]);
+    const bs=bsArr[0]||{};
+    renderModal({price:p,ratios:rt,metrics:mk,recs:rc,targets:tg,income:inc,cf:cf,bs:bs,incomeHistory:incArr}, chart?.chart?.result?.[0]||null, st, sym);
   }catch(e){renderFallback(st,sym);}
 }
 
