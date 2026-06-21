@@ -255,35 +255,58 @@ const fP=n=>n&&!isNaN(+n)&&+n>0?'$'+(+n).toFixed(2):'—';
 const fPct=(s,raw)=>{const v=raw??parseFloat((s||'').replace('%',''));if(isNaN(v))return{h:'<span class="neu">—</span>',v:0};return{h:`<span class="${v>0?'pos':v<0?'neg':'neu'}">${v>0?'+':''}${v.toFixed(2)}%</span>`,v};};
 const SC={Technology:'#2196f3',Finance:'#ff9800','Health Care':'#26a69a','Consumer Discretionary':'#9c27b0','Consumer Staples':'#8bc34a',Industrials:'#607d8b',Energy:'#ef5350','Real Estate':'#795548',Utilities:'#00bcd4','Basic Materials':'#ffc107',Telecommunications:'#e91e63'};
 const stag=s=>{if(!s)return'<span class="tag" style="background:#1a1e2e;color:#4a4e5a;">—</span>';const c=SC[s]||'#787b86';return`<span class="tag" style="background:${c}22;color:${c};">${s.replace('Consumer ','').replace(' Care','').replace(' Services','').substring(0,12)}</span>`;};
-const proc=(s,ex)=>({...s,exchange:ex,price:parseFloat((s.lastsale||'').replace('$','')),pct:parseFloat((s.pctchange||'').replace('%','')),volume:parseInt(s.volume||0),marketCap:parseFloat(s.marketCap||0)});
+const proc=(s,ex)=>slim(s,ex);
 
-function fetchWithTimeout(url, ms=20000){
-  const ctrl=new AbortController();
-  const id=setTimeout(()=>ctrl.abort(),ms);
-  return fetch(url,{signal:ctrl.signal}).finally(()=>clearTimeout(id));
+function slim(s,ex){
+  return{
+    symbol:s.symbol,name:s.name,lastsale:s.lastsale,pctchange:s.pctchange,
+    netchange:s.netchange,volume:s.volume,marketCap:s.marketCap,
+    sector:s.sector,industry:s.industry,country:s.country,exchange:ex,
+    price:parseFloat((s.lastsale||'').replace('$','')),
+    pct:parseFloat((s.pctchange||'').replace('%','')),
+    volume_n:parseInt(s.volume||0),
+    marketCap_n:parseFloat(s.marketCap||0)
+  };
 }
 
 async function loadAll(){
   const setStatus=msg=>document.getElementById('stxt').textContent=msg;
+  const showErr=msg=>{
+    document.getElementById('tableArea').innerHTML=`<div class="loader" style="color:#ef5350;"><div style="font-size:28px;">⚠</div><div>${msg}</div><button onclick="location.reload()" style="margin-top:12px;padding:8px 18px;background:#2196f3;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;">Recargar</button></div>`;
+    setStatus('Error de carga');
+  };
+
+  // ── Fase 1: cargar NASDAQ y mostrar inmediatamente ──
   try{
     setStatus('Descargando NASDAQ...');
-    const nd=await fetchWithTimeout('https://cdn.jsdelivr.net/gh/rreichel3/US-Stock-Symbols@main/nasdaq/nasdaq_full_tickers.json').then(r=>r.json());
-    setStatus(`NASDAQ OK (${nd.length} acciones) — Descargando NYSE...`);
-    const ny=await fetchWithTimeout('https://cdn.jsdelivr.net/gh/rreichel3/US-Stock-Symbols@main/nyse/nyse_full_tickers.json').then(r=>r.json());
-    setStatus('Procesando datos...');
-    ALL=[...nd.map(s=>proc(s,'NASDAQ')),...ny.map(s=>proc(s,'NYSE'))];
-    ALL.forEach(s=>{if(s.sector)SECS.add(s.sector);});
-    const sel=document.getElementById('secF');
-    [...SECS].sort().forEach(s=>{const o=document.createElement('option');o.value=s;o.textContent=s;sel.appendChild(o);});
+    const ndRaw=await fetch('https://cdn.jsdelivr.net/gh/rreichel3/US-Stock-Symbols@main/nasdaq/nasdaq_full_tickers.json').then(r=>r.json());
+    ALL=ndRaw.map(s=>slim(s,'NASDAQ'));
+    addSectors(ALL);
     FILT=[...ALL];srtData();
-    setStatus(ALL.length.toLocaleString()+' acciones cargadas');
-    document.getElementById('lastUpdate').textContent='Actualizado: '+new Date().toLocaleTimeString('es-ES');
+    setStatus(`NASDAQ: ${ALL.length.toLocaleString()} acciones — cargando NYSE...`);
     document.getElementById('pgBar').style.display='flex';
-  }catch(e){
-    const msg=e.name==='AbortError'?'Timeout — La descarga tardó demasiado. Recarga (F5).':'Error al cargar datos. Revisa tu conexión y recarga (F5).';
-    document.getElementById('tableArea').innerHTML=`<div class="loader" style="color:#ef5350;"><div style="font-size:32px;">⚠</div><div>${msg}</div><button onclick="location.reload()" style="margin-top:12px;padding:8px 18px;background:#2196f3;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;">Recargar</button></div>`;
-    document.getElementById('stxt').textContent='Error de carga';
-  }
+  }catch(e){showErr('Error al cargar NASDAQ. Revisa tu conexión y recarga (F5).');return;}
+
+  // ── Fase 2: cargar NYSE en segundo plano y fusionar ──
+  try{
+    const nyRaw=await fetch('https://cdn.jsdelivr.net/gh/rreichel3/US-Stock-Symbols@main/nyse/nyse_full_tickers.json').then(r=>r.json());
+    const nyse=nyRaw.map(s=>slim(s,'NYSE'));
+    ALL=[...ALL,...nyse];
+    addSectors(nyse);
+    FILT=[...ALL];srtData();
+    setStatus(`${ALL.length.toLocaleString()} acciones cargadas (NASDAQ + NYSE)`);
+    document.getElementById('lastUpdate').textContent='Actualizado: '+new Date().toLocaleTimeString('es-ES');
+  }catch(e){setStatus(`NASDAQ listo — Error al cargar NYSE`);}
+}
+
+function addSectors(list){
+  const sel=document.getElementById('secF');
+  list.forEach(s=>{
+    if(s.sector&&!SECS.has(s.sector)){
+      SECS.add(s.sector);
+      const o=document.createElement('option');o.value=s.sector;o.textContent=s.sector;sel.appendChild(o);
+    }
+  });
 }
 
 const applyF=()=>{
