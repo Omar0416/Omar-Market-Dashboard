@@ -394,63 +394,79 @@ async function openModal(sym){
   });
   document.getElementById('modalBg').classList.add('open');
   switchTab('ov',document.querySelector('.tab'));
-  const proxy='https://corsproxy.io/?url=';
+  const FMP='https://financialmodelingprep.com/api/v3';
+  const KEY='oaLMlFZq2kNmBfGSPfk88ohWtDrOwxBt';
   try{
-    // Yahoo Finance requires a crumb for authenticated endpoints
-    const crumb=await fetch(`${proxy}${encodeURIComponent('https://query1.finance.yahoo.com/v1/test/getcrumb')}`).then(r=>r.text()).catch(()=>null);
-    const summUrl=`https://query2.finance.yahoo.com/v10/finance/quoteSummary/${sym}?modules=price,summaryDetail,defaultKeyStatistics,financialData,assetProfile,recommendationTrend,earningsTrend,earningsHistory,balanceSheetHistory${crumb?'&crumb='+encodeURIComponent(crumb):''}`;
-    const chartUrl=`https://query1.finance.yahoo.com/v8/finance/chart/${sym}?interval=1d&range=1y${crumb?'&crumb='+encodeURIComponent(crumb):''}`;
-    const [chart,summ]=await Promise.all([
-      fetch(`${proxy}${encodeURIComponent(chartUrl)}`).then(r=>r.json()).catch(()=>null),
-      fetch(`${proxy}${encodeURIComponent(summUrl)}`).then(r=>r.json()).catch(()=>null)
+    const [chart,profile,ratios,metrics,recs,targets,income,cashflow,balance]=await Promise.all([
+      fetch(`https://corsproxy.io/?url=${encodeURIComponent(`https://query1.finance.yahoo.com/v8/finance/chart/${sym}?interval=1d&range=1y`)}`).then(r=>r.json()).catch(()=>null),
+      fetch(`${FMP}/profile/${sym}?apikey=${KEY}`).then(r=>r.json()).catch(()=>null),
+      fetch(`${FMP}/ratios-ttm/${sym}?apikey=${KEY}`).then(r=>r.json()).catch(()=>null),
+      fetch(`${FMP}/key-metrics-ttm/${sym}?apikey=${KEY}`).then(r=>r.json()).catch(()=>null),
+      fetch(`${FMP}/analyst-stock-recommendations/${sym}?limit=1&apikey=${KEY}`).then(r=>r.json()).catch(()=>null),
+      fetch(`${FMP}/price-target-consensus/${sym}?apikey=${KEY}`).then(r=>r.json()).catch(()=>null),
+      fetch(`${FMP}/income-statement/${sym}?limit=4&apikey=${KEY}`).then(r=>r.json()).catch(()=>null),
+      fetch(`${FMP}/cash-flow-statement/${sym}?limit=1&apikey=${KEY}`).then(r=>r.json()).catch(()=>null),
+      fetch(`${FMP}/balance-sheet-statement/${sym}?limit=1&apikey=${KEY}`).then(r=>r.json()).catch(()=>null)
     ]);
-    renderModal(summ?.quoteSummary?.result?.[0]||{}, chart?.chart?.result?.[0]||null, st, sym);
+    const p=Array.isArray(profile)?profile[0]:{};
+    const rt=Array.isArray(ratios)?ratios[0]:{};
+    const mk=Array.isArray(metrics)?metrics[0]:{};
+    const rc=Array.isArray(recs)?recs[0]:{};
+    const tg=Array.isArray(targets)?targets[0]:{};
+    const inc=Array.isArray(income)?income[0]:{};
+    const cf=Array.isArray(cashflow)?cashflow[0]:{};
+    const bs=Array.isArray(balance)?balance[0]:{};
+    renderModal({price:p,ratios:rt,metrics:mk,recs:rc,targets:tg,income:inc,cf:cf,bs:bs,incomeHistory:income||[]}, chart?.chart?.result?.[0]||null, st, sym);
   }catch(e){renderFallback(st,sym);}
 }
 
 function renderModal(r,cd,st,sym){
-  const pr=r.price||{},sd=r.summaryDetail||{},ks=r.defaultKeyStatistics||{},fd=r.financialData||{},ap=r.assetProfile||{};
-  const livePrc=fv(pr,'regularMarketPrice'),liveChg=fv(pr,'regularMarketChangePercent');
-  if(livePrc!=null){document.getElementById('dPrc').textContent='$'+parseFloat(livePrc).toFixed(2);}
-  if(liveChg!=null){const v=parseFloat(liveChg)*100;document.getElementById('dChg').innerHTML=`<span class="${v>=0?'pos':'neg'}">${v>=0?'+':''}${v.toFixed(2)}%</span>`;}
-  const prcNow=livePrc??st.price;
+  // r = {price:p, ratios:rt, metrics:mk, recs:rc, targets:tg, income:inc, cf:cf, bs:bs, incomeHistory:[]}
+  const p=r.price||{},rt=r.ratios||{},mk=r.metrics||{},rc=r.recs||{},tg=r.targets||{};
+  const inc=r.income||{},cf=r.cf||{},bs=r.bs||{},incH=r.incomeHistory||[];
+
+  // Live price from FMP profile
+  const livePrc=p.price;
+  const liveChgPct=p.changesPercentage;
+  if(livePrc){document.getElementById('dPrc').textContent='$'+parseFloat(livePrc).toFixed(2);}
+  if(liveChgPct!=null){const v=parseFloat(liveChgPct);document.getElementById('dChg').innerHTML=`<span class="${v>=0?'pos':'neg'}">${v>=0?'+':''}${v.toFixed(2)}%</span>`;}
+  const prcNow=livePrc||st.price;
 
   // ── OVERVIEW ──
-  const mc2=fv(pr,'marketCap'),pe=fv(sd,'trailingPE'),eps=fv(ks,'trailingEps'),div=fv(sd,'dividendYield'),beta=fv(sd,'beta'),w52h=fv(sd,'fiftyTwoWeekHigh'),w52l=fv(sd,'fiftyTwoWeekLow');
-  const emp=ap.fullTimeEmployees;
+  const mc2=p.mktCap,pe=rt.peRatioTTM,eps=p.eps,div=p.lastDiv,beta=p.beta,w52h=p.range?parseFloat(p.range.split('-')[1]):null,w52l=p.range?parseFloat(p.range.split('-')[0]):null;
+  const emp=p.fullTimeEmployees;
+  const fmtPct=v=>v!=null?(parseFloat(v)*100).toFixed(2)+'%':'—';
   document.getElementById('ov-kf').innerHTML=mkCards([
     ['Market Cap',fN(mc2)],['P/E (TTM)',pe?parseFloat(pe).toFixed(1)+'x':'—'],
-    ['EPS (TTM)',eps?'$'+parseFloat(eps).toFixed(2):'—'],['Div. Yield',div&&div!==0?(parseFloat(div)*100).toFixed(2)+'%':'—'],
-    ['Beta',beta?parseFloat(beta).toFixed(2):'—'],['52w High',w52h?'$'+parseFloat(w52h).toFixed(2):'—'],
-    ['52w Low',w52l?'$'+parseFloat(w52l).toFixed(2):'—'],['Empleados',emp?parseInt(emp).toLocaleString():'—']
+    ['EPS (TTM)',eps?'$'+parseFloat(eps).toFixed(2):'—'],['Div. Yield',div&&div!=0?parseFloat(div).toFixed(3):'—'],
+    ['Beta',beta?parseFloat(beta).toFixed(2):'—'],['52w High',w52h?'$'+w52h.toFixed(2):'—'],
+    ['52w Low',w52l?'$'+w52l.toFixed(2):'—'],['Empleados',emp?parseInt(emp).toLocaleString():'—']
   ]);
-  const debt=fv(fd,'totalDebt'),cash=fv(fd,'totalCash');
-  const ev=mc2&&debt&&cash?fN(parseFloat(mc2)+parseFloat(debt)-parseFloat(cash)):'—';
-  document.getElementById('ov-cap').innerHTML=`<div class="ml">Capital Structure</div>`+irRow('Market Cap',fN(mc2))+irRow('Enterprise Value',ev)+irRow('Cash & Equivalents',fN(cash))+irRow('Deuda Total',fN(debt));
-  const ss=fv(ks,'sharesOutstanding'),fs=fv(ks,'floatShares');
-  const ceo=(ap.companyOfficers||[]).find(o=>(o.title||'').toLowerCase().includes('ceo'));
-  document.getElementById('ov-own').innerHTML=`<div class="ml">Empresa</div>`+irRow('CEO',ceo?.name||'—')+irRow('Sector',ap.sector||st.sector||'—')+irRow('Industria',(ap.industry||st.industry||'—').substring(0,22))+irRow('Shares outstanding',fN(ss))+irRow('Free float',fN(fs))+(ap.website?irRow('Website',`<a href="${ap.website}" target="_blank" style="color:#2196f3;">${ap.website.replace(/https?:\/\/(www\.)?/,'')}</a>`):'');
-  const desc=ap.longBusinessSummary||st.industry||'Sin descripción disponible.';
+  const debt=bs.totalDebt,cash=bs.cashAndCashEquivalents;
+  const evV=p.enterpriseValue||mk.enterpriseValueTTM;
+  document.getElementById('ov-cap').innerHTML=`<div class="ml">Capital Structure</div>`+irRow('Market Cap',fN(mc2))+irRow('Enterprise Value',fN(evV))+irRow('Cash & Equivalents',fN(cash))+irRow('Deuda Total',fN(debt));
+  const ss=p.sharesOutstanding,fs=null;
+  document.getElementById('ov-own').innerHTML=`<div class="ml">Empresa</div>`+irRow('CEO',p.ceo||'—')+irRow('Sector',p.sector||st.sector||'—')+irRow('Industria',(p.industry||st.industry||'—').substring(0,22))+irRow('Shares outstanding',fN(ss))+irRow('Free float','—')+(p.website?irRow('Website',`<a href="${p.website}" target="_blank" style="color:#2196f3;">${p.website.replace(/https?:\/\/(www\.)?/,'')}</a>`):'');
+  const desc=p.description||st.industry||'Sin descripción disponible.';
   document.getElementById('ov-about').innerHTML=`<div class="ml">Descripción</div><p style="font-size:12px;color:#d1d4dc;margin-top:8px;line-height:1.7;">${desc.substring(0,600)}${desc.length>600?'…':''}</p>`;
 
   // ── FINANCIALS ──
-  const ps=fv(sd,'priceToSalesTrailing12Months'),pb=fv(ks,'priceToBook');
-  const rev=fv(fd,'totalRevenue'),ni=fv(fd,'netIncomeToCommon'),fcf=fv(fd,'freeCashflow');
-  const gm=fv(fd,'grossMargins'),om=fv(fd,'operatingMargins'),nm=fv(fd,'profitMargins');
-  const roe=fv(fd,'returnOnEquity'),roa=fv(fd,'returnOnAssets');
+  const ps=rt.priceToSalesRatioTTM,pb=rt.priceToBookRatioTTM;
+  const rev=inc.revenue,ni=inc.netIncome,fcfV=cf.freeCashFlow;
+  const gm=rt.grossProfitMarginTTM,om=rt.operatingProfitMarginTTM,nm=rt.netProfitMarginTTM;
+  const roe=rt.returnOnEquityTTM,roa=rt.returnOnAssetsTTM;
+  const fmtR=v=>v!=null?parseFloat(v).toFixed(2)+'x':'—';
+  const fmtP=v=>v!=null?(parseFloat(v)*100).toFixed(1)+'%':'—';
   document.getElementById('fin-val').innerHTML=mkCards([
-    ['P/E (TTM)',pe?parseFloat(pe).toFixed(1)+'x':'—'],['P/S (TTM)',ps?parseFloat(ps).toFixed(2)+'x':'—'],
-    ['P/Book',pb?parseFloat(pb).toFixed(2)+'x':'—'],['Enterprise Value',ev]
+    ['P/E (TTM)',fmtR(pe)],['P/S (TTM)',fmtR(ps)],
+    ['P/Book',fmtR(pb)],['Enterprise Value',fN(evV)]
   ]);
-  document.getElementById('fin-growth').innerHTML=irRow('Revenue',fN(rev))+irRow('Net Income',fN(ni))+irRow('Free Cash Flow',fN(fcf))+irRow('Margen Bruto',gm?(parseFloat(gm)*100).toFixed(1)+'%':'—')+irRow('Margen Operativo',om?(parseFloat(om)*100).toFixed(1)+'%':'—')+irRow('Margen Neto',nm?(parseFloat(nm)*100).toFixed(1)+'%':'—')+irRow('ROE',roe?(parseFloat(roe)*100).toFixed(1)+'%':'—')+irRow('ROA',roa?(parseFloat(roa)*100).toFixed(1)+'%':'—');
-  const stDebt=fv(r,'balanceSheetHistory','balanceSheetStatements',0,'shortLongTermDebt');
-  const ltDebt=fv(r,'balanceSheetHistory','balanceSheetStatements',0,'longTermDebt');
-  const ta=fv(r,'balanceSheetHistory','balanceSheetStatements',0,'totalAssets');
-  const tl=fv(r,'balanceSheetHistory','balanceSheetStatements',0,'totalLiab');
-  document.getElementById('fin-health').innerHTML=irRow('Deuda Total',fN(debt))+irRow('Free Cash Flow',fN(fcf))+irRow('Cash & Equivalents',fN(cash))+irRow('Deuda Corto Plazo',fN(stDebt))+irRow('Deuda Largo Plazo',fN(ltDebt))+irRow('Debt/Equity',fv(ks,'debtToEquity')?parseFloat(fv(ks,'debtToEquity')).toFixed(2)+'x':'—')+irRow('Quick Ratio',fv(fd,'quickRatio')?parseFloat(fv(fd,'quickRatio')).toFixed(2):'—');
+  document.getElementById('fin-growth').innerHTML=irRow('Revenue',fN(rev))+irRow('Net Income',fN(ni))+irRow('Free Cash Flow',fN(fcfV))+irRow('Margen Bruto',fmtP(gm))+irRow('Margen Operativo',fmtP(om))+irRow('Margen Neto',fmtP(nm))+irRow('ROE',fmtP(roe))+irRow('ROA',fmtP(roa));
+  const stDebt=bs.shortTermDebt,ltDebt=bs.longTermDebt,ta=bs.totalAssets,tl=bs.totalLiabilities;
+  const de=rt.debtEquityRatioTTM,qr=rt.quickRatioTTM;
+  document.getElementById('fin-health').innerHTML=irRow('Deuda Total',fN(debt))+irRow('Free Cash Flow',fN(fcfV))+irRow('Cash & Equivalents',fN(cash))+irRow('Deuda Corto Plazo',fN(stDebt))+irRow('Deuda Largo Plazo',fN(ltDebt))+irRow('Debt/Equity',de?parseFloat(de).toFixed(2)+'x':'—')+irRow('Quick Ratio',qr?parseFloat(qr).toFixed(2):'—');
   document.getElementById('fin-bal').innerHTML=`<div class="mc"><div class="ml">Activos y Pasivos</div>${irRow('Activos Totales',fN(ta))+irRow('Pasivos Totales',fN(tl))}</div><div class="mc"><div class="ml">Deuda</div>${irRow('Deuda LP',fN(ltDebt))+irRow('Cash',fN(cash))}</div>`;
-  const et=r.earningsTrend?.trend||[];
-  document.getElementById('fin-est').innerHTML=`<table class="etbl"><thead><tr><th>Período</th><th>Rev. Estimado</th><th>Mínimo</th><th>Máximo</th></tr></thead><tbody>${et.length?et.slice(0,4).map(t=>`<tr><td>${t.period||'—'}</td><td>${fv(t,'revenueEstimate','avg')?fN(fv(t,'revenueEstimate','avg')):'—'}</td><td>${fv(t,'revenueEstimate','low')?fN(fv(t,'revenueEstimate','low')):'—'}</td><td>${fv(t,'revenueEstimate','high')?fN(fv(t,'revenueEstimate','high')):'—'}</td></tr>`).join(''):'<tr><td colspan="4" style="color:#787b86;text-align:center;padding:10px;">Sin datos</td></tr>'}</tbody></table>`;
+  document.getElementById('fin-est').innerHTML=`<table class="etbl"><thead><tr><th>Período</th><th>Revenue</th><th>Net Income</th><th>EPS</th></tr></thead><tbody>${incH.length?incH.slice(0,4).map(t=>`<tr><td>${t.calendarYear||'—'}</td><td>${fN(t.revenue)}</td><td>${fN(t.netIncome)}</td><td>${t.eps!=null?parseFloat(t.eps).toFixed(2):'—'}</td></tr>`).join(''):'<tr><td colspan="4" style="color:#787b86;text-align:center;padding:10px;">Sin datos</td></tr>'}</tbody></table>`;
 
   // ── TECHNICALS ──
   if(cd){
@@ -490,7 +506,8 @@ function renderModal(r,cd,st,sym){
   }
 
   // ── FORECASTS ──
-  const tgt=fv(fd,'targetMeanPrice'),tgtH=fv(fd,'targetHighPrice'),tgtL=fv(fd,'targetLowPrice'),nAna=fv(fd,'numberOfAnalystOpinions'),rec=fv(fd,'recommendationKey')||'';
+  const tgt=tg.targetConsensus,tgtH=tg.targetHigh,tgtL=tg.targetLow,nAna=rc.analystRatingsStrongBuy+rc.analystRatingsBuy+rc.analystRatingsHold+rc.analystRatingsSell+rc.analystRatingsStrongSell||0;
+  const rec=rc.analystRatingsStrongBuy>rc.analystRatingsSell?'strong buy':rc.analystRatingsBuy>rc.analystRatingsSell?'buy':rc.analystRatingsHold>0?'hold':'sell';
   const upside=tgt&&prcNow?(((parseFloat(tgt)/parseFloat(prcNow))-1)*100):null;
   document.getElementById('fct-pt').innerHTML=`
     <div style="display:flex;align-items:baseline;gap:12px;margin-bottom:8px;">
@@ -501,20 +518,15 @@ function renderModal(r,cd,st,sym){
     ${tgt&&tgtL&&tgtH?`<div class="pt-bar">
       <div class="pt-fill" style="left:0%;width:100%;"></div>
       ${prcNow?`<div class="pt-pin" style="left:${Math.min(100,Math.max(0,(parseFloat(prcNow)-parseFloat(tgtL))/(parseFloat(tgtH)-parseFloat(tgtL))*100)).toFixed(0)}%;"></div>`:''}</div>
-      <div style="display:flex;justify-content:space-between;font-size:10px;color:#787b86;"><span>Min $${parseFloat(tgtL).toFixed(0)}</span><span>Precio objetivo $${parseFloat(tgt).toFixed(2)}</span><span>Max $${parseFloat(tgtH).toFixed(0)}</span></div>`:
-    ''}`;
-  const rt=r.recommendationTrend?.trend?.[0]||{};
-  const sb=rt.strongBuy||0,b2=rt.buy||0,h2=rt.hold||0,sl=rt.sell||0,sSell=rt.strongSell||0,tot2=sb+b2+h2+sl+sSell||1;
-  document.getElementById('fct-ar').innerHTML=`<div style="font-size:11px;color:#787b86;margin-bottom:14px;">Basado en ${tot2} analistas · <span style="text-transform:capitalize;font-weight:600;color:${rec.includes('buy')?'#26a69a':rec.includes('sell')?'#ef5350':'#787b86'}">${rec.replace(/_/g,' ')||'—'}</span></div>
+      <div style="display:flex;justify-content:space-between;font-size:10px;color:#787b86;"><span>Min $${parseFloat(tgtL).toFixed(0)}</span><span>Precio objetivo $${parseFloat(tgt).toFixed(2)}</span><span>Max $${parseFloat(tgtH).toFixed(0)}</span></div>`:''}`;
+  const sb=rc.analystRatingsStrongBuy||0,b2=rc.analystRatingsBuy||0,h2=rc.analystRatingsHold||0,sl=rc.analystRatingsSell||0,sSell=rc.analystRatingsStrongSell||0,tot2=sb+b2+h2+sl+sSell||1;
+  document.getElementById('fct-ar').innerHTML=`<div style="font-size:11px;color:#787b86;margin-bottom:14px;">Basado en ${tot2} analistas · <span style="text-transform:capitalize;font-weight:600;color:${rec.includes('buy')?'#26a69a':rec.includes('sell')?'#ef5350':'#787b86'}">${rec}</span></div>
   ${abarHTML('Strong buy',sb,tot2,'#26a69a')}${abarHTML('Buy',b2,tot2,'#26a69a88')}${abarHTML('Hold',h2,tot2,'#787b86')}${abarHTML('Sell',sl,tot2,'#ef535088')}${abarHTML('Strong sell',sSell,tot2,'#ef5350')}`;
-  const eh=(r.earningsHistory?.history||[]).slice(-6);
-  document.getElementById('fct-eps').innerHTML=`<table class="etbl"><thead><tr><th>Período</th><th>EPS Reportado</th><th>EPS Estimado</th><th>Surprise</th></tr></thead><tbody>
-  ${eh.length?eh.map(e=>{const rep=fv(e,'epsActual'),est=fv(e,'epsEstimate'),sup=fv(e,'surprisePercent');const sv=sup!=null?parseFloat(sup)*100:null;
-  return`<tr><td>${e.quarter?.fmt||'—'}</td><td class="pos">${rep!=null?parseFloat(rep).toFixed(2):'—'}</td><td>${est!=null?parseFloat(est).toFixed(2):'—'}</td><td class="${sv!=null&&sv>=0?'pos':'neg'}">${sv!=null?(sv>=0?'+':'')+sv.toFixed(2)+'%':'—'}</td></tr>`;}).join(''):
+  document.getElementById('fct-eps').innerHTML=`<table class="etbl"><thead><tr><th>Año</th><th>Revenue</th><th>Net Income</th><th>EPS</th></tr></thead><tbody>
+  ${incH.length?incH.slice(0,6).map(e=>`<tr><td>${e.calendarYear||'—'}</td><td>${fN(e.revenue)}</td><td class="${(e.netIncome||0)>=0?'pos':'neg'}">${fN(e.netIncome)}</td><td class="${(e.eps||0)>=0?'pos':'neg'}">${e.eps!=null?parseFloat(e.eps).toFixed(2):'—'}</td></tr>`).join(''):
   '<tr><td colspan="4" style="color:#787b86;text-align:center;padding:10px;">Sin datos de EPS</td></tr>'}</tbody></table>`;
-  const rtd=(r.earningsTrend?.trend||[]).slice(0,4);
-  document.getElementById('fct-rev').innerHTML=`<table class="etbl"><thead><tr><th>Período</th><th>Revenue Est.</th><th>Mínimo</th><th>Máximo</th></tr></thead><tbody>
-  ${rtd.length?rtd.map(t=>`<tr><td>${t.period||'—'}</td><td>${fv(t,'revenueEstimate','avg')?fN(fv(t,'revenueEstimate','avg')):'—'}</td><td>${fv(t,'revenueEstimate','low')?fN(fv(t,'revenueEstimate','low')):'—'}</td><td>${fv(t,'revenueEstimate','high')?fN(fv(t,'revenueEstimate','high')):'—'}</td></tr>`).join(''):
+  document.getElementById('fct-rev').innerHTML=`<table class="etbl"><thead><tr><th>Año</th><th>Revenue</th><th>Net Income</th><th>Margen Neto</th></tr></thead><tbody>
+  ${incH.length?incH.slice(0,4).map(t=>`<tr><td>${t.calendarYear||'—'}</td><td>${fN(t.revenue)}</td><td>${fN(t.netIncome)}</td><td>${t.netIncomeRatio!=null?(parseFloat(t.netIncomeRatio)*100).toFixed(1)+'%':'—'}</td></tr>`).join(''):
   '<tr><td colspan="4" style="color:#787b86;text-align:center;padding:10px;">Sin datos</td></tr>'}</tbody></table>`;
 }
 
