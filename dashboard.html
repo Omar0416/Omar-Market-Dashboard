@@ -395,7 +395,7 @@ async function openModal(sym){
   document.getElementById('modalBg').classList.add('open');
   switchTab('ov',document.querySelector('.tab'));
   const FMP='https://financialmodelingprep.com/api/v3';
-  const KEY='oaLMlFZq2kNmBfGSPfk88ohWtDrOwxBt';
+  const KEY='vmXPeCR9BwnM5xrBKBHUJWnMpHNgsCCS';
   try{
     const [chart,profile,ratios,metrics,recs,targets,income,cashflow,balance]=await Promise.all([
       fetch(`https://corsproxy.io/?url=${encodeURIComponent(`https://query1.finance.yahoo.com/v8/finance/chart/${sym}?interval=1d&range=1y`)}`).then(r=>r.json()).catch(()=>null),
