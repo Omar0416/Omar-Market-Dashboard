@@ -499,9 +499,9 @@ function renderModal(r,cd,st,sym){
       <div style="display:flex;justify-content:space-between;font-size:10px;color:#787b86;"><span>Min $${parseFloat(tgtL).toFixed(0)}</span><span>Precio objetivo $${parseFloat(tgt).toFixed(2)}</span><span>Max $${parseFloat(tgtH).toFixed(0)}</span></div>`:
     ''}`;
   const rt=r.recommendationTrend?.trend?.[0]||{};
-  const sb=rt.strongBuy||0,b2=rt.buy||0,h2=rt.hold||0,sl=rt.sell||0,ss=rt.strongSell||0,tot2=sb+b2+h2+sl+ss||1;
+  const sb=rt.strongBuy||0,b2=rt.buy||0,h2=rt.hold||0,sl=rt.sell||0,sSell=rt.strongSell||0,tot2=sb+b2+h2+sl+sSell||1;
   document.getElementById('fct-ar').innerHTML=`<div style="font-size:11px;color:#787b86;margin-bottom:14px;">Basado en ${tot2} analistas · <span style="text-transform:capitalize;font-weight:600;color:${rec.includes('buy')?'#26a69a':rec.includes('sell')?'#ef5350':'#787b86'}">${rec.replace(/_/g,' ')||'—'}</span></div>
-  ${abarHTML('Strong buy',sb,tot2,'#26a69a')}${abarHTML('Buy',b2,tot2,'#26a69a88')}${abarHTML('Hold',h2,tot2,'#787b86')}${abarHTML('Sell',sl,tot2,'#ef535088')}${abarHTML('Strong sell',ss,tot2,'#ef5350')}`;
+  ${abarHTML('Strong buy',sb,tot2,'#26a69a')}${abarHTML('Buy',b2,tot2,'#26a69a88')}${abarHTML('Hold',h2,tot2,'#787b86')}${abarHTML('Sell',sl,tot2,'#ef535088')}${abarHTML('Strong sell',sSell,tot2,'#ef5350')}`;
   const eh=(r.earningsHistory?.history||[]).slice(-6);
   document.getElementById('fct-eps').innerHTML=`<table class="etbl"><thead><tr><th>Período</th><th>EPS Reportado</th><th>EPS Estimado</th><th>Surprise</th></tr></thead><tbody>
   ${eh.length?eh.map(e=>{const rep=fv(e,'epsActual'),est=fv(e,'epsEstimate'),sup=fv(e,'surprisePercent');const sv=sup!=null?parseFloat(sup)*100:null;
