@@ -394,10 +394,11 @@ async function openModal(sym){
   });
   document.getElementById('modalBg').classList.add('open');
   switchTab('ov',document.querySelector('.tab'));
+  const proxy='https://corsproxy.io/?url=';
   try{
     const [chart,summ]=await Promise.all([
-      fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${sym}?interval=1d&range=1y`).then(r=>r.json()).catch(()=>null),
-      fetch(`https://query2.finance.yahoo.com/v10/finance/quoteSummary/${sym}?modules=price,summaryDetail,defaultKeyStatistics,financialData,assetProfile,recommendationTrend,earningsTrend,earningsHistory,balanceSheetHistory`).then(r=>r.json()).catch(()=>null)
+      fetch(`${proxy}${encodeURIComponent(`https://query1.finance.yahoo.com/v8/finance/chart/${sym}?interval=1d&range=1y`)}`).then(r=>r.json()).catch(()=>null),
+      fetch(`${proxy}${encodeURIComponent(`https://query2.finance.yahoo.com/v10/finance/quoteSummary/${sym}?modules=price,summaryDetail,defaultKeyStatistics,financialData,assetProfile,recommendationTrend,earningsTrend,earningsHistory,balanceSheetHistory`)}`).then(r=>r.json()).catch(()=>null)
     ]);
     renderModal(summ?.quoteSummary?.result?.[0]||{}, chart?.chart?.result?.[0]||null, st, sym);
   }catch(e){renderFallback(st,sym);}
