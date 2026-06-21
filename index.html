@@ -396,9 +396,13 @@ async function openModal(sym){
   switchTab('ov',document.querySelector('.tab'));
   const proxy='https://corsproxy.io/?url=';
   try{
+    // Yahoo Finance requires a crumb for authenticated endpoints
+    const crumb=await fetch(`${proxy}${encodeURIComponent('https://query1.finance.yahoo.com/v1/test/getcrumb')}`,{credentials:'include'}).then(r=>r.text()).catch(()=>null);
+    const summUrl=`https://query2.finance.yahoo.com/v10/finance/quoteSummary/${sym}?modules=price,summaryDetail,defaultKeyStatistics,financialData,assetProfile,recommendationTrend,earningsTrend,earningsHistory,balanceSheetHistory${crumb?'&crumb='+encodeURIComponent(crumb):''}`;
+    const chartUrl=`https://query1.finance.yahoo.com/v8/finance/chart/${sym}?interval=1d&range=1y${crumb?'&crumb='+encodeURIComponent(crumb):''}`;
     const [chart,summ]=await Promise.all([
-      fetch(`${proxy}${encodeURIComponent(`https://query1.finance.yahoo.com/v8/finance/chart/${sym}?interval=1d&range=1y`)}`).then(r=>r.json()).catch(()=>null),
-      fetch(`${proxy}${encodeURIComponent(`https://query2.finance.yahoo.com/v10/finance/quoteSummary/${sym}?modules=price,summaryDetail,defaultKeyStatistics,financialData,assetProfile,recommendationTrend,earningsTrend,earningsHistory,balanceSheetHistory`)}`).then(r=>r.json()).catch(()=>null)
+      fetch(`${proxy}${encodeURIComponent(chartUrl)}`).then(r=>r.json()).catch(()=>null),
+      fetch(`${proxy}${encodeURIComponent(summUrl)}`).then(r=>r.json()).catch(()=>null)
     ]);
     renderModal(summ?.quoteSummary?.result?.[0]||{}, chart?.chart?.result?.[0]||null, st, sym);
   }catch(e){renderFallback(st,sym);}
